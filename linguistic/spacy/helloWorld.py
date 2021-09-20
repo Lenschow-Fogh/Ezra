@@ -11,3 +11,20 @@ print("------------- PRINTING ALL ENTITIES -------------")
 for ent in doc.ents:
     print(ent.text, ent.start_char, ent.end_char, ent.label_)
 print("---------- FINISHED PRINTING ENTITIES ------------")
+
+
+
+def censor_word(text, word):
+    print("censor_word:", word)
+    print("censor_word text:", text)
+    censoredWord = "*" * len(word)
+    return text.replace(word, censoredWord)
+
+def censor_ents(doc, originalText):
+    if doc.ents:
+        censoredText = originalText
+        for ent in doc.ents:
+            label = ent.label_
+            if label == "PERSON" or label == "GPE":
+                censoredText = censor_word(originalText, ent.text)
+    return censoredText
