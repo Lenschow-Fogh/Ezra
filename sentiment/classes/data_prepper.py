@@ -3,6 +3,9 @@ import requests
 import math
 from bs4 import BeautifulSoup
 from collections import OrderedDict
+import pandas as pd
+import numpy as np
+import re
 
 
 class DataPrepper:
@@ -146,3 +149,37 @@ class DataPrepper:
             if k not in pol_dict:
                 pol_dict[k] = -v
         return pol_dict
+
+    def remove_tags(self, text):
+        TAG_RE = re.compile(r'<[^>]+>')
+        return TAG_RE.sub('', text)
+
+    # Borrowed from: https://towardsdatascience.com/an-easy-tutorial-about-sentiment-analysis-with-deep-learning-and-keras-2bf52b9cba91 
+    # and https://stackabuse.com/python-for-nlp-movie-sentiment-analysis-using-deep-learning-in-keras/
+    def preprocess_text(self, sen):
+        # Removing html tags
+        sentence = self.remove_tags(sen)
+
+        #Removing URLs with a regular expression
+        url_pattern = re.compile(r'https?://\S+|www\.\S+')
+        sentence = url_pattern.sub(r'', sentence)
+
+        # Remove Emails
+        sentence = re.sub('\S*@\S*\s?', '', sentence)
+        
+        # Remove new line characters
+        sentence = re.sub('\s+', ' ', sentence)
+
+        # Remove punctuations and numbers
+        sentence = re.sub('[^a-zA-Z]', ' ', sentence)
+
+        # Remove distracting single quotes
+        sentence = re.sub("\'", "", sentence)
+
+        # Single character removal
+        sentence = re.sub(r"\s+[a-zA-Z]\s+", ' ', sentence)
+
+        # Removing multiple spaces
+        sentence = re.sub(r'\s+', ' ', sentence)
+
+        return sentence
