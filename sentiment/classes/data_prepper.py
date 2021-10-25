@@ -154,6 +154,7 @@ class DataPrepper:
         TAG_RE = re.compile(r'<[^>]+>')
         return TAG_RE.sub('', text)
 
+    from nltk.corpus import stopwords
     # Borrowed from: https://towardsdatascience.com/an-easy-tutorial-about-sentiment-analysis-with-deep-learning-and-keras-2bf52b9cba91 
     # and https://stackabuse.com/python-for-nlp-movie-sentiment-analysis-using-deep-learning-in-keras/
     def preprocess_text(self, sen):
