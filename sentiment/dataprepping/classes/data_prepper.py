@@ -68,6 +68,8 @@ class DataPrepper:
     def order_dict(self, d, order):
         if order == 'desc':
             return OrderedDict(sorted(d.items(), key=lambda kv: kv[1], reverse=True))
+        if order == 'asc':
+            return OrderedDict(sorted(d.items(), key=lambda kv: kv[1], reverse=False))
 
     def get_weights(self, data, nlp, ignore_terms, ignore_ents):
         N = len(data)
@@ -184,3 +186,115 @@ class DataPrepper:
         sentence = re.sub(r'\s+', ' ', sentence)
 
         return sentence
+
+    def plot_weights(self, weights, name):
+        from collections import Counter
+
+        weights = list(weights.values())
+        vals = []
+        for v in weights: 
+            vals.append(round(v, 2))
+
+        c = Counter(vals)
+
+        total_values = len(vals)
+
+        vals_90_pct = total_values / 100 * 90
+
+        boundary = 0
+        counter = 0
+        for i in c:
+            if(counter + c[i] < int(vals_90_pct)):
+                counter = counter + c[i]
+                boundary = i
+            else:
+                break
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        my_cmap = plt.get_cmap("viridis")
+        rescale = lambda y: (y - np.min(y)) / (np.max(y) - np.min(y))
+
+        plt.figure(figsize=[10,6])
+        bars = plt.bar(list(c.keys()), list(c.values()), color=my_cmap(rescale(list(c.values()))), width=0.01, alpha=0.7, align='center')
+
+        plt.legend(loc="best")
+        plt.ylim([0, max(list(c.values()))+10])
+        ax2 = plt.gca()
+
+        ymin, ymax = ax2.get_ylim()
+        plt.vlines(boundary, ymin=ymin, ymax=ymax, colors='r', label='90% of values')
+
+        plt.ylabel('Frequency of weight', fontdict={'fontsize':13, 'fontweight': 'bold'})
+        plt.xlabel('# of words with same weight', fontdict={'fontsize':13, 'fontweight': 'bold'})
+        plt.title("Distribution of " + name + " lengths", fontdict={'fontsize':14, 'fontweight': 'bold'})
+        plt.legend()
+        plt.show()
+        print("Boundary is:", boundary)
+        print("Counter is:", counter)
+        return counter
+
+    def plot_weight_and_polarity(self, m_weights, w_weights, pols, name):
+        import numpy as np 
+        import matplotlib.pyplot as plt
+        from sklearn.preprocessing import normalize
+
+        m_weights = list(m_weights.values())
+        w_weights = list(w_weights.values())
+        pols = list(pols.values())
+        # m_weights = np.array(m_weights)
+        pol_to_rep = {
+        -1.0: 0,
+        -0.9: 1,
+        -0.8: 2,
+        -0.7: 3,
+        -0.6: 4,
+        -0.5: 5,
+        -0.4: 6,
+        -0.3: 7,
+        -0.2: 8,
+        -0.1: 9,
+        -0.0: 10,
+        0.0: 10,
+        0.1: 11,
+        0.2: 12,
+        0.3: 13,
+        0.4: 14,
+        0.5: 15,
+        0.6: 16,
+        0.7: 17,
+        0.8: 18,
+        0.9: 19,
+        1.0: 20,
+        }
+
+        m_weights_rounded = []
+        for weight in m_weights:
+            m_weights_rounded.append(round(float(weight), 2))
+        x, y = np.unique(m_weights_rounded, return_counts=True)
+
+
+        plt.figure(figsize=[10,6])
+        plt.plot(x, y, color='b', alpha=0.7)
+
+
+        w_weights_rounded = []
+        for weight in w_weights:
+            w_weights_rounded.append(round(float(weight), 2))
+        x, y = np.unique(w_weights_rounded, return_counts=True)
+
+        plt.plot(x, y, color='r', alpha=0.7)
+
+        pols_rounded = []
+        for weight in pols:
+            pols_rounded.append(round(float(weight), 2))
+        x, y = np.unique(pols_rounded, return_counts=True)
+
+        plt.plot(x, y, color='g', alpha=0.7)
+
+        plt.ylabel('Frequency of words', fontdict={'fontsize':13, 'fontweight': 'bold'})
+        plt.xlabel('Polarity', fontdict={'fontsize':13, 'fontweight': 'bold'})
+        plt.title("Distribution of normalized weights and polarities", fontdict={'fontsize':14, 'fontweight': 'bold'})
+        plt.legend()
+        plt.show()
