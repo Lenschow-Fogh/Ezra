@@ -95,7 +95,7 @@ class DataPrepper:
                         m_df[key] += 1
                     else:
                         m_df[key] = 1
-            if article['gender'] == 'W':
+            if article['gender'] == 'F':
                 for token in doc:
                     if not token.is_stop and token.lemma_ not in ignore_terms and token.ent_type_ not in ignore_ents:
                         word = token.lemma_
