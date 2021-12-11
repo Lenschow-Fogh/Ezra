@@ -48,52 +48,78 @@ def encode_feature(train_data_, test_data_):
     tokenizer.fit_on_texts(train_data_)
     return tokenizer.texts_to_sequences(train_data_), tokenizer.texts_to_sequences(test_data_), len(tokenizer.word_index)
 
-def plot_confusion_matrix(cm_true, cm_pred, title, xlabel, ylabel):
-    # Plotting pred confusion matrix
-    cm = confusion_matrix(cm_true, cm_pred, normalize='pred')
+def round_list(list):
+    rounded_pols = []
+    for seq in list:
+        rounded_pols.append([round(pol,1) for pol in seq])
+    return rounded_pols
 
-    fig = plt.figure( figsize=[18.5,10.5])
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(cm)
-    ax.set_xlabel(xlabel, fontsize = 30, labelpad=15.0)
-    ax.xaxis.set_label_position('top')
-    ax.set_ylabel(ylabel, fontsize = 30, labelpad=15.0)
-    ax.set_title(title+' (pred)',fontweight="bold", size=30, pad=70.0)
+def encode_list(list, pol_to_enc):
+    encoded_pols = []
+    for seq in list:
+        encoded_pols.append([pol_to_enc[pol] for pol in seq])
+    return encoded_pols
 
-    cm_axis_vals = []
+def one_hot_list(list, n_unique_classes):
+    one_hot_pols = []
+    for seq in list:
+        one_hot_pols.append([to_categorical(pol, n_unique_classes) for pol in seq])
+    return one_hot_pols
 
-    for x in np.unique(np.array(cm_pred)):
-        cm_axis_vals.append(x)
+def plot_confusion_matrix_binary(cm_true, cm_pred, title, xlabel, ylabel):
+    def plot_cm(normalize_type):
+        cm = confusion_matrix(cm_true, cm_pred, normalize=normalize_type)
 
-    cb = fig.colorbar(cax)
-    cb.set_label(label='',size='xx-large', weight='bold')
-    cb.ax.tick_params(labelsize='xx-large')
-    plt.xticks(range(2), cm_axis_vals, rotation=90, fontsize=25)
-    plt.yticks(range(2), cm_axis_vals, fontsize=25)
-    plt.show()
+        fig = plt.figure( figsize=[18.5,10.5])
+        ax = fig.add_subplot(111)
+        cax = ax.matshow(cm)
+        ax.set_xlabel(xlabel, fontsize = 30, labelpad=15.0)
+        ax.xaxis.set_label_position('top')
+        ax.set_ylabel(ylabel, fontsize = 30, labelpad=15.0)
+        ax.set_title(title+' ('+normalize_type+')',fontweight="bold", size=30, pad=70.0)
 
-    # Plotting true confusion matrix
-    cm = confusion_matrix(cm_true, cm_pred, normalize='true')
+        cm_axis_vals = []
 
-    fig = plt.figure( figsize=[18.5,10.5])
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(cm)
-    ax.set_xlabel(xlabel, fontsize = 30, labelpad=15.0)
-    ax.xaxis.set_label_position('top')
-    ax.set_ylabel(ylabel, fontsize = 30, labelpad=15.0)
-    ax.set_title(title+' (true)',fontweight="bold", size=30, pad=70.0)
+        for x in np.unique(np.array(cm_pred)):
+            cm_axis_vals.append(x)
 
-    cm_axis_vals = []
+        cb = fig.colorbar(cax)
+        cb.set_label(label='',size='xx-large', weight='bold')
+        cb.ax.tick_params(labelsize='xx-large')
+        plt.xticks(range(2), cm_axis_vals, rotation=90, fontsize=25)
+        plt.yticks(range(2), cm_axis_vals, fontsize=25)
+        plt.show()
 
-    for x in np.unique(np.array(cm_pred)):
-        cm_axis_vals.append(x)
+    plot_cm('pred')
+    plot_cm('true')
 
-    cb = fig.colorbar(cax)
-    cb.set_label(label='',size='xx-large', weight='bold')
-    cb.ax.tick_params(labelsize='xx-large')
-    plt.xticks(range(2), cm_axis_vals, rotation=90, fontsize=25)
-    plt.yticks(range(2), cm_axis_vals, fontsize=25)
-    plt.show()
+
+def plot_confusion_matrix_multi(cm_true, cm_pred, title, xlabel, ylabel, enc_to_pol):
+    def plot_cm(normalize_type):
+        cm = confusion_matrix(cm_true, cm_pred, normalize=normalize_type)
+
+        fig = plt.figure( figsize=[18.5,10.5])
+        ax = fig.add_subplot(111)
+        cax = ax.matshow(cm)
+        ax.set_xlabel(xlabel, fontsize = 30, labelpad=15.0)
+        ax.xaxis.set_label_position('top')
+        ax.set_ylabel(ylabel, fontsize = 30, labelpad=15.0)
+        ax.set_title(title+' ('+normalize_type+')',fontweight="bold", size=30, pad=70.0)
+
+        cm_axis_vals = []
+
+        for x in np.unique(np.array(np.concatenate((cm_true,cm_pred)))):
+            cm_axis_vals.append(enc_to_pol[x])
+
+        cb = fig.colorbar(cax)
+        cb.set_label(label='',size='xx-large', weight='bold')
+        cb.ax.tick_params(labelsize='xx-large')
+        plt.xticks(range(len(cm_axis_vals)), cm_axis_vals, rotation=90, fontsize=25)
+        plt.yticks(range(len(cm_axis_vals)), cm_axis_vals, fontsize=25)
+        plt.show()
+
+    plot_cm('pred')
+    plot_cm('true')
 
 def get_metrics(y_test, y_pred, vocab, vocab_name):
     report = classification_report(y_test, y_pred, output_dict=True)
@@ -109,7 +135,7 @@ def get_metrics(y_test, y_pred, vocab, vocab_name):
 
     return df_perf_2
 
-def xai_binary(predictions, input_data, N_greatest_polarities):
+def xai_binary(predictions, input_data, N):
     # Borrowed from: https://www.geeksforgeeks.org/python-program-to-find-n-largest-elements-from-a-list/
     # Function returns N largest elements
     def Nmaxelements(list, N):
@@ -129,16 +155,57 @@ def xai_binary(predictions, input_data, N_greatest_polarities):
         print("Was predicted to be", 'masculine' if pred == 0 else 'feminine', "("+str(pred)+").\n")
 
         print("Most", 'masculine' if pred == 0 else 'feminine', "words in sentence are:\n")
-        greatest_pols = []
+        polarity_word_pair = []
 
         if (pred == 0):
-            greatest_pols = Nmaxelements(sorted(data['Polarity']), N_greatest_polarities)
+            polarity_word_pair =  [(pol, word) for (pol,word) in sorted(zip(data['Polarity'], data["Word"]))]
         else:
-            greatest_pols = Nmaxelements(sorted(data['Polarity'], reverse=True), N_greatest_polarities)
+            polarity_word_pair =  [(pol, word) for (pol,word) in sorted(zip(data['Polarity'], data["Word"]), reverse=True)]
 
-        for pol in greatest_pols:
-            i = data['Polarity'].index(pol)
-            print("'"+data["Word"][i]+"'", "with a polarity of", round(pol,2))
+        for pol, word in polarity_word_pair[:N]:
+            print("'"+word+"'", "with a polarity of", round(pol,2))
+
+def xai_multi(predictions, input_data, N, enc_to_pol):
+    # Borrowed from: https://www.geeksforgeeks.org/python-program-to-find-n-largest-elements-from-a-list/
+    # Function returns N largest elements
+    def Nmaxelements(list, N):
+        return list[:N]
+
+    def find_complete_sentence(sentence_number, sentences):
+        index = sentences.index[sentences['Sentence #'] == sentence_number].tolist()[0]
+        return sentences['Text'][index]
+
+    # Equation 8
+    def p_s(polarities):
+        count = sum(map(lambda x: x > 0.0 or x < 0.0, polarities))
+        return round(sum(polarities) / count,1) if count > 0 else 0.0
+
+    complete_sentences = pd.read_json('../datasets/7_sentences.json')
+
+    for pred_seq, row in zip(predictions, input_data.iterrows()):
+        data = row[1]
+
+        pred_seq = [enc_to_pol[v] for v in pred_seq]
+        sentiment = p_s(pred_seq)
+
+        if (sentiment > 0.1 or sentiment < -0.1):
+            print("\n---------------------------------------------------------------------------------------")
+            print("The sentence:", '"'+find_complete_sentence(data['Sentence #'], complete_sentences)+'".\n')
+            print("Was predicted to be", 'masculine' if sentiment < 0.0 else 'feminine', "("+str(sentiment)+").\n")
+
+            print("Most", 'masculine' if sentiment < 0 else 'feminine', "words in sentence are:\n")
+            polarity_word_pair = []
+
+            if (sentiment < 0):
+                polarity_word_pair =  [(pol, word) for (pol,word) in sorted(zip(pred_seq, data["Word"]))]
+            else:
+                polarity_word_pair =  [(pol, word) for (pol,word) in sorted(zip(pred_seq, data["Word"]), reverse=True)]
+
+            for pol, word in polarity_word_pair[:N]:
+                # word = 'ERROR: A padding was predicted' if i+1 > len(data["Word"]) else "'"+data["Word"][i]+"'"
+                print("'"+word+"'", "with a polarity of", round(pol,2))
+                
+        
 
 def plot_sentence_lengths(data_):
     sentence_plot = data_["Word"].values
