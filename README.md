@@ -1,4 +1,4 @@
-# Mitigation of stigma, prejudice anddiscrimination during early stages ofrecruitment using machine learning
+# Mitigation of stigma, prejudice and discrimination during early stages of recruitment using machine learning
 
 ## Abstract
 Due to demographic characteristics and socioeconomic status, applicants are facing discrimination in the
