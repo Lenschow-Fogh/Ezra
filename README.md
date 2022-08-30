@@ -3,7 +3,7 @@
 ## Abstract
 Due to demographic characteristics and socioeconomic status, applicants are facing discrimination in the
 early stages of job recruitment due to conscious or subconscious stigmatization by the employer. Not
-only may applicants discarded by the employer based on demographic characteristics, but leading up to
+only may applicants be discarded by the employer based on demographic characteristics, but leading up to
 pursuing a job, how a job advertisement is phrased with respect to gendered wording can affect pursuit
 intentions. Studies find that race and ethnicity of the applicant can entail that the applicant has to
 apply for double as many jobs as an applicant appertaining a majority, to receive the same amount of
